@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Secret Watch Together 💖</title>
+<style>
+  body,html {
+    margin:0; padding:0; height:100%; background:#fef6f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex; justify-content: center; align-items: center;
+    overflow: hidden;
+  }
+  #passwordScreen, #mainApp {
+    width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  #passwordScreen {
+    background: #ffcee1;
+    color: #fff;
+    font-size: 1.4rem;
+  }
+  #passwordInput {
+    font-size: 1.2rem;
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    border: none;
+    outline:none;
+    margin-top: 1rem;
+    width: 200px;
+  }
+  #passwordSubmit {
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    font-size: 1.2rem;
+    border-radius: 12px;
+    border: none;
+    background: #ff4081;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  #passwordSubmit:hover {
+    background: #e91e63;
+  }
+  #errorMsg {
+    margin-top: 0.5rem;
+    color: #fff7f7;
+  }
+
+  /* Main app styling */
+  #mainApp {
+    display: none;
+    width: 95vw; max-width: 1400px;
+    height: 95vh;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    overflow: hidden;
+    flex-direction: column;
+  }
+  header {
+    padding: 1rem;
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #ff4081;
+    text-align: center;
+  }
+  #urlInputSection {
+    display: flex;
+    padding: 0 1rem 1rem 1rem;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  #videoUrlInput {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    outline: none;
+  }
+  #setUrlBtn {
+    background: #ff4081;
+    border: none;
+    color: white;
+    padding: 0.5rem 1.2rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  #setUrlBtn:hover {
+    background: #e91e63;
+  }
+  .container {
+    flex: 1;
+    display: flex;
+    gap: 1rem;
+    overflow: hidden;
+    position: relative;
+  }
+
+  #videoSection {
+    flex: 3;
+    background: #000;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  #videoSection iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+  }
+  #fullscreenBtn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 10;
+    background: rgba(255,64,129,0.85);
+    border: none;
+    padding: 0.5rem 0.9rem;
+    border-radius: 15px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+  }
+  #fullscreenBtn:hover {
+    background: #e91e63;
+  }
+
+  #chatSection {
+    flex: 1;
+    background: #fff0f7;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    box-sizing: border-box;
+    transition: transform 0.3s ease;
+  }
+  #chatSection.hidden {
+    transform: translateX(100%);
+  }
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+  #messages p {
+    background: #ffb6c1;
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    margin: 0.3rem 0;
+    max-width: 80%;
+    word-wrap: break-word;
+  }
+  #inputSection {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+  #chatInput {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    outline: none;
+  }
+  #sendBtn {
+    background: #ff4081;
+    border: none;
+    color: white;
+    padding: 0.5rem 1.2rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  #sendBtn:hover {
+    background: #e91e63;
+  }
+
+  #status {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #ff4081;
+    text-align: center;
+  }
+
+  /* Chat toggle button */
+  #chatToggleBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ff4081;
+    border: none;
+    color: white;
+    padding: 0.4rem 0.7rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 20;
+    transition: background-color 0.3s;
+  }
+  #chatToggleBtn:hover {
+    background: #e91e63;
+  }
+
+  /* Toast popup for fullscreen chat message */
+  #toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,64,129,0.95);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 50;
+  }
+  #toast.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    #mainApp {
+      height: 100vh;
+      width: 100vw;
+      border-radius: 0;
+    }
+    .container {
+      flex-direction: column;
+    }
+    #videoSection {
+      flex: unset;
+      height: 60vh;
+      border-radius: 0;
+    }
+    #chatSection {
+      flex: unset;
+      height: 35vh;
+      border-radius: 0;
+      position: relative;
+      transform: translateX(0) !important;
+    }
+    #chatToggleBtn {
+      top: auto;
+      bottom: 80px;
+      right: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Password screen -->
+<div id="passwordScreen">
+  <div>Enter the secret password to watch together:</div>
+  <input id="passwordInput" type="password" placeholder="Password" autofocus />
+  <button id="passwordSubmit">Join</button>
+  <div id="errorMsg"></div>
+</div>
+
+<!-- Main app -->
+<div id="mainApp">
+  <header>🎬 Secret Watch Together 💖</header>
+  <div id="urlInputSection">
+    <input id="videoUrlInput" type="text" placeholder="Paste YouTube URL here" />
+    <button id="setUrlBtn">Set Video</button>
+  </div>
+  <div class="container">
+    <div id="videoSection">
+      <iframe id="videoFrame" src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen allow="autoplay"></iframe>
+      <button id="fullscreenBtn" title="Toggle Fullscreen">Fullscreen ⛶</button>
+      <button id="chatToggleBtn" title="Toggle Chat">Chat 💬</button>
+    </div>
+    <div id="chatSection">
+      <div id="messages"></div>
+      <div id="inputSection">
+        <input id="chatInput" type="text" placeholder="Type your message..." />
+        <button id="sendBtn">Send</button>
+      </div>
+      <div id="status"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// Password check
+const PASSWORD = '2005';
+const passwordScreen = document.getElementById('passwordScreen');
+const mainApp = document.getElementById('mainApp');
+const passwordInput = document.getElementById('passwordInput');
+const passwordSubmit = document.getElementById('passwordSubmit');
+const errorMsg = document.getElementById('errorMsg');
+
+passwordSubmit.onclick = checkPassword;
+passwordInput.onkeydown = e => { if(e.key==='Enter') checkPassword(); };
+
+function checkPassword() {
+  if(passwordInput.value === PASSWORD) {
+    passwordScreen.style.display = 'none';
+    mainApp.style.display = 'flex';
+    initializeApp();
+  } else {
+    errorMsg.textContent = 'Wrong password! Try again.';
+    passwordInput.value = '';
+  }
+}
+
+// WebRTC peer connection variables
+let localConnection;
+let dataChannel;
+let connected = false;
+
+const messagesDiv = document.getElementById('messages');
+const chatInput = document.getElementById('chatInput');
+const sendBtn = document.getElementById('sendBtn');
+const statusDiv = document.getElementById('status');
+
+const videoFrame = document.getElementById('videoFrame');
+const videoUrlInput = document.getElementById('videoUrlInput');
+const setUrlBtn = document.getElementById('setUrlBtn');
+
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const chatSection = document.getElementById('chatSection');
+const chatToggleBtn = document.getElementById('chatToggleBtn');
+const toast = document.getElementById('toast');
+
+let isChatVisible = true;
+let isFullscreen = false;
+
+// Setup fullscreen toggle
+fullscreenBtn.onclick = () => {
+  if (!document.fullscreenElement) {
+    videoSection.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+};
+const videoSection = document.getElementById('videoSection');
+document.addEventListener('fullscreenchange', () => {
+  isFullscreen = !!document.fullscreenElement;
+});
+
+// Toggle chat visibility
+chatToggleBtn.onclick = () => {
+  isChatVisible = !isChatVisible;
+  if (isChatVisible) {
+    chatSection.classList.remove('hidden');
+    chatToggleBtn.textContent = 'Chat 💬';
+  } else {
+    chatSection.classList.add('hidden');
+    chatToggleBtn.textContent = 'Chat ❌';
+  }
+};
+
+// Show toast message on fullscreen
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3500);
+}
+
+// Add chat message to UI
+function addMessage(text, isLocal) {
+  const p = document.createElement('p');
+  p.textContent = text;
+  p.style.backgroundColor = isLocal ? '#ff6f91' : '#ffb6c1';
+  messagesDiv.appendChild(p);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+  if (!isLocal && isFullscreen) {
+    showToast(text);
+  }
+}
+
+// Send chat message
+function sendMessage() {
+  const text = chatInput.value.trim();
+  if(!text || !connected || dataChannel.readyState !== 'open') return;
+  dataChannel.send(JSON.stringify({type:'chat', text}));
+  addMessage(text, true);
+  chatInput.value = '';
+}
+
+// Set video URL
+setUrlBtn.onclick = () => {
+  let url = videoUrlInput.value.trim();
+  if(!url) return alert('Please paste a valid YouTube URL');
+
+  const videoId = extractYouTubeId(url);
+  if(!videoId) return alert('Invalid YouTube URL');
+
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+
+  setVideoSrc(embedUrl, true);
+};
+
+// Set iframe src and notify peer
+function setVideoSrc(url, notifyPeer) {
+  videoFrame.src = url;
+  videoUrlInput.value = url;
+
+  if(notifyPeer && connected && dataChannel.readyState === 'open') {
+    dataChannel.send(JSON.stringify({type:'video-url', url}));
+  }
+}
+
+// Extract YouTube video ID from URL
+function extractYouTubeId(url) {
+  const regExp = /^.*((youtu.be\/)|(v\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[6].length === 11) ? match[6] : null;
+}
+
+// Initialize WebRTC and chat
+function initializeApp() {
+  statusDiv.textContent = 'Connecting...';
+
+  const initiator = confirm('Are you the initiator of this watch session? Press OK for yes.');
+
+  // Setup WebRTC PeerConnection
+  localConnection = new RTCPeerConnection();
+
+  if(initiator) {
+    dataChannel = localConnection.createDataChannel('chat');
+    setupDataChannel();
+    localConnection.createOffer()
+      .then(offer => localConnection.setLocalDescription(offer))
+      .then(() => {
+        // This demo does not include signaling server — for real app, share localConnection.localDescription with peer manually
+        alert('Send this offer to your friend:\n\n' + JSON.stringify(localConnection.localDescription));
+        const answerStr = prompt('Paste your friend\'s answer here:');
+        if(answerStr) {
+          const answer = JSON.parse(answerStr);
+          localConnection.setRemoteDescription(answer);
+        }
+      });
+  } else {
+    localConnection.ondatachannel = event => {
+      dataChannel = event.channel;
+      setupDataChannel();
+    };
+    const offerStr = prompt('Paste initiator\'s offer here:');
+    if(offerStr) {
+      const offer = JSON.parse(offerStr);
+      localConnection.setRemoteDescription(offer)
+        .then(() => localConnection.createAnswer())
+        .then(answer => localConnection.setLocalDescription(answer))
+        .then(() => {
+          alert('Send this answer back to the initiator:\n\n' + JSON.stringify(localConnection.localDescription));
+        });
+    }
+  }
+
+  localConnection.onicecandidate = event => {
+    if(event.candidate) {
+      console.log('ICE candidate:', event.candidate);
+      // ICE candidates should be exchanged via signaling in real apps
+    }
+  };
+
+  localConnection.onconnectionstatechange = () => {
+    if(localConnection.connectionState === 'connected') {
+      connected = true;
+      statusDiv.textContent = 'Connected!';
+    }
+  };
+
+  sendBtn.onclick = sendMessage;
+  chatInput.onkeydown = e => { if(e.key === 'Enter') sendMessage(); };
+
+  // Add received messages
+  function setupDataChannel() {
+    dataChannel.onopen = () => {
+      connected = true;
+      statusDiv.textContent = 'Connected!';
+    };
+    dataChannel.onclose = () => {
+      connected = false;
+      statusDiv.textContent = 'Disconnected.';
+    };
+    dataChannel.onerror = err => {
+      statusDiv.textContent = 'Error: ' + err;
+    };
+    dataChannel.onmessage = e => {
+      try {
+        const data = JSON.parse(e.data);
+        if(data.type === 'chat') {
+          addMessage(data.text, false);
+        } else if(data.type === 'video-url') {
+          setVideoSrc(data.url, false);
+        }
+      } catch(err) {
+        console.error('Invalid data:', e.data);
+      }
+    };
+  }
+}
+</script>
+
+</body>
+</html>

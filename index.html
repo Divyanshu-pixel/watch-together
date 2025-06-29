@@ -257,9 +257,28 @@
                 height: 200px;
             }
         }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
+    <!-- Same HTML structure as before -->
     <div class="container" id="home-container">
         <h1>Watch2Gether</h1>
         <p>Watch videos in sync with friends</p>
@@ -344,41 +363,44 @@
         </div>
     </div>
 
+    <div class="toast" id="toast"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
+
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDvGQ5qQ6q8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8",
+            authDomain: "watch2gether-demo.firebaseapp.com",
+            databaseURL: "https://watch2gether-demo-default-rtdb.firebaseio.com",
+            projectId: "watch2gether-demo",
+            storageBucket: "watch2gether-demo.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         // DOM Elements
         const homeContainer = document.getElementById('home-container');
         const createRoomContainer = document.getElementById('create-room-container');
         const joinRoomContainer = document.getElementById('join-room-container');
         const roomContainer = document.getElementById('room-container');
-
-        const createRoomBtn = document.getElementById('create-room-btn');
-        const joinRoomBtn = document.getElementById('join-room-btn');
-        const startRoomBtn = document.getElementById('start-room-btn');
-        const joinRoomSubmitBtn = document.getElementById('join-room-submit-btn');
-        const backHomeBtn = document.getElementById('back-home-btn');
-        const backHomeBtn2 = document.getElementById('back-home-btn-2');
-        const leaveRoomBtn = document.getElementById('leave-room');
-        const copyRoomIdBtn = document.getElementById('copy-room-id');
-        const sendMessageBtn = document.getElementById('send-message');
-        const chatInput = document.getElementById('chat-input');
-        const playPauseBtn = document.getElementById('play-pause');
-        const volumeControl = document.getElementById('volume-control');
-        const changeVideoBtn = document.getElementById('change-video-btn');
-        const changeVideoUrl = document.getElementById('change-video-url');
+        const toast = document.getElementById('toast');
 
         // Room state
         let currentRoomId = '';
         let isCreator = false;
         let currentUser = '';
         let player;
-        let users = [];
-        let chatMessages = [];
-
-        // YouTube API
-        function onYouTubeIframeAPIReady() {
-            // Player will be initialized when room is created/joined
-        }
+        let userId = generateUserId();
+        let lastSyncTime = 0;
+        let ignorePlayerStateChanges = false;
 
         // Initialize YouTube player
         function initYouTubePlayer(videoId) {
@@ -404,14 +426,21 @@
             updatePlayerControls();
             event.target.setVolume(100);
             
-            // Sync playback every 5 seconds if creator
+            // If creator, set up periodic sync
             if (isCreator) {
-                setInterval(syncPlayback, 5000);
+                setInterval(sendPlayerState, 5000);
             }
         }
 
         function onPlayerStateChange(event) {
+            if (ignorePlayerStateChanges) return;
+            
             updatePlayerControls();
+            
+            // Broadcast player state changes to other users
+            if (isCreator && (Date.now() - lastSyncTime > 1000)) {
+                sendPlayerState();
+            }
         }
 
         function updatePlayerControls() {
@@ -424,7 +453,6 @@
                 playPauseBtn.textContent = '▶';
             }
             
-            // Update time display
             updateTimeDisplay();
         }
 
@@ -444,68 +472,48 @@
             return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
 
-        // Event Listeners
-        createRoomBtn.addEventListener('click', () => {
-            homeContainer.classList.add('hidden');
-            createRoomContainer.classList.remove('hidden');
-        });
-
-        joinRoomBtn.addEventListener('click', () => {
-            homeContainer.classList.add('hidden');
-            joinRoomContainer.classList.remove('hidden');
-        });
-
-        backHomeBtn.addEventListener('click', goToHome);
-        backHomeBtn2.addEventListener('click', goToHome);
-
-        function goToHome() {
-            createRoomContainer.classList.add('hidden');
-            joinRoomContainer.classList.add('hidden');
-            roomContainer.classList.add('hidden');
-            homeContainer.classList.remove('hidden');
-            
-            // Reset any room state
-            if (player) {
-                player.destroy();
-                player = null;
-            }
-        }
-
-        startRoomBtn.addEventListener('click', createRoom);
-        joinRoomSubmitBtn.addEventListener('click', joinRoom);
-
+        // Firebase Room Management
         function createRoom() {
             const videoUrl = document.getElementById('video-url').value.trim();
             const password = document.getElementById('room-password').value.trim();
             currentUser = document.getElementById('creator-name').value.trim() || 'Host';
             
             if (!videoUrl) {
-                alert('Please enter a video URL');
+                showToast('Please enter a video URL');
                 return;
             }
             
-            // Extract video ID (simplified for demo)
-            let videoId = extractVideoId(videoUrl);
+            const videoId = extractVideoId(videoUrl);
             if (!videoId) {
-                alert('Please enter a valid YouTube or Vimeo URL');
+                showToast('Please enter a valid YouTube or Vimeo URL');
                 return;
             }
             
-            // In a real app, this would be generated by the server
             currentRoomId = generateRoomId();
             isCreator = true;
             
-            // Show room UI
-            showRoomUI();
+            // Create room in Firebase
+            const roomRef = database.ref('rooms/' + currentRoomId);
             
-            // Initialize player with the video
-            initYouTubePlayer(videoId);
+            roomRef.set({
+                videoId: videoId,
+                password: password || null,
+                creatorId: userId,
+                currentTime: 0,
+                isPlaying: false,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP
+            });
             
-            // Simulate adding host to user list
+            // Set up room listeners
+            setupRoomListeners();
+            
+            // Add creator to users list
             addUserToRoom(currentUser, true);
             
-            // Simulate receiving a welcome message
-            addChatMessage('System', `Welcome to your room! Share the Room ID: ${currentRoomId} with others to join.`);
+            showRoomUI();
+            initYouTubePlayer(videoId);
+            
+            showToast(`Room created! Share ID: ${currentRoomId}`);
         }
 
         function joinRoom() {
@@ -514,41 +522,213 @@
             currentUser = document.getElementById('joiner-name').value.trim() || 'Guest';
             
             if (!roomId) {
-                alert('Please enter a room ID');
+                showToast('Please enter a room ID');
                 return;
             }
             
-            // In a real app, you would verify the room exists and password matches
             currentRoomId = roomId;
             isCreator = false;
             
-            // Show room UI
-            showRoomUI();
+            // Check if room exists
+            const roomRef = database.ref('rooms/' + currentRoomId);
             
-            // Simulate joining an existing room
-            // In a real app, you would get the current video from the server
-            const dummyVideoId = 'dQw4w9WgXcQ'; // Default video if not creator
-            initYouTubePlayer(dummyVideoId);
-            
-            // Simulate adding user to room
-            addUserToRoom(currentUser, false);
-            
-            // Simulate receiving a welcome message
-            addChatMessage('System', `You've joined the room!`);
-            addChatMessage('Host', `Welcome to the room, ${currentUser}!`);
+            roomRef.once('value').then((snapshot) => {
+                if (!snapshot.exists()) {
+                    showToast('Room does not exist');
+                    return;
+                }
+                
+                const roomData = snapshot.val();
+                
+                // Check password if set
+                if (roomData.password && roomData.password !== password) {
+                    showToast('Incorrect room password');
+                    return;
+                }
+                
+                // Set up room listeners
+                setupRoomListeners();
+                
+                // Add user to room
+                addUserToRoom(currentUser, false);
+                
+                showRoomUI();
+                initYouTubePlayer(roomData.videoId);
+                
+                showToast(`Joined room ${currentRoomId}`);
+            });
         }
 
-        function showRoomUI() {
-            homeContainer.classList.add('hidden');
-            createRoomContainer.classList.add('hidden');
-            joinRoomContainer.classList.add('hidden');
-            roomContainer.classList.remove('hidden');
+        function setupRoomListeners() {
+            const roomRef = database.ref('rooms/' + currentRoomId);
             
-            document.getElementById('room-id-display').textContent = currentRoomId;
+            // Listen for video changes
+            roomRef.on('value', (snapshot) => {
+                const roomData = snapshot.val();
+                if (!roomData) {
+                    showToast('Room has been closed');
+                    goToHome();
+                    return;
+                }
+                
+                // Update video if changed
+                if (player && player.getVideoData().video_id !== roomData.videoId) {
+                    player.loadVideoById(roomData.videoId, roomData.currentTime, "large");
+                    ignorePlayerStateChanges = true;
+                    setTimeout(() => {
+                        if (roomData.isPlaying) {
+                            player.playVideo();
+                        } else {
+                            player.pauseVideo();
+                        }
+                        ignorePlayerStateChanges = false;
+                    }, 1000);
+                }
+                
+                // Sync playback if not creator
+                if (!isCreator && (Date.now() - lastSyncTime > 1000)) {
+                    const currentTime = player.getCurrentTime();
+                    const timeDiff = Math.abs(currentTime - roomData.currentTime);
+                    
+                    if (timeDiff > 2) { // If more than 2 seconds difference
+                        ignorePlayerStateChanges = true;
+                        player.seekTo(roomData.currentTime, true);
+                        
+                        if (roomData.isPlaying && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                            player.playVideo();
+                        } else if (!roomData.isPlaying && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                            player.pauseVideo();
+                        }
+                        
+                        setTimeout(() => {
+                            ignorePlayerStateChanges = false;
+                        }, 1000);
+                    }
+                }
+            });
+            
+            // Listen for chat messages
+            database.ref('rooms/' + currentRoomId + '/messages').on('child_added', (snapshot) => {
+                const message = snapshot.val();
+                addChatMessage(message.sender, message.text, message.timestamp);
+            });
+            
+            // Listen for users
+            database.ref('rooms/' + currentRoomId + '/users').on('value', (snapshot) => {
+                const users = snapshot.val() || {};
+                updateUserList(users);
+            });
         }
 
+        function sendPlayerState() {
+            if (!isCreator || !player) return;
+            
+            const currentTime = player.getCurrentTime();
+            const isPlaying = player.getPlayerState() === YT.PlayerState.PLAYING;
+            
+            database.ref('rooms/' + currentRoomId).update({
+                currentTime: currentTime,
+                isPlaying: isPlaying,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            lastSyncTime = Date.now();
+        }
+
+        function addUserToRoom(username, isCreator) {
+            database.ref('rooms/' + currentRoomId + '/users/' + userId).set({
+                name: username,
+                isCreator: isCreator,
+                joinedAt: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            // Remove user when they leave
+            window.addEventListener('beforeunload', () => {
+                removeUserFromRoom();
+            });
+        }
+
+        function removeUserFromRoom() {
+            if (currentRoomId) {
+                database.ref('rooms/' + currentRoomId + '/users/' + userId).remove();
+                
+                // If creator leaves, close the room
+                if (isCreator) {
+                    database.ref('rooms/' + currentRoomId).remove();
+                }
+            }
+        }
+
+        function updateUserList(users) {
+            const userList = document.getElementById('user-list');
+            userList.innerHTML = '';
+            
+            Object.values(users).forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = user.name;
+                if (user.isCreator) {
+                    li.classList.add('creator');
+                }
+                userList.appendChild(li);
+            });
+        }
+
+        function sendChatMessage(message) {
+            if (!currentRoomId || !currentUser) return;
+            
+            database.ref('rooms/' + currentRoomId + '/messages').push().set({
+                sender: currentUser,
+                text: message,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+
+        function addChatMessage(sender, message, timestamp) {
+            const chatMessagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            
+            const time = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 
+                                  new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <span class="sender">${sender}:</span>
+                <span class="text">${message}</span>
+                <span class="time">${time}</span>
+            `;
+            
+            chatMessagesDiv.appendChild(messageDiv);
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+        }
+
+        function changeVideo() {
+            if (!isCreator) {
+                showToast('Only the room creator can change the video');
+                return;
+            }
+            
+            const newUrl = document.getElementById('change-video-url').value.trim();
+            if (!newUrl) return;
+            
+            const videoId = extractVideoId(newUrl);
+            if (!videoId) {
+                showToast('Please enter a valid YouTube or Vimeo URL');
+                return;
+            }
+            
+            database.ref('rooms/' + currentRoomId).update({
+                videoId: videoId,
+                currentTime: 0,
+                isPlaying: false,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            document.getElementById('change-video-url').value = '';
+            showToast('Video changed');
+        }
+
+        // Helper functions
         function extractVideoId(url) {
-            // Simplified for demo - in a real app you'd need more robust URL parsing
             if (url.includes('youtube.com') || url.includes('youtu.be')) {
                 const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
                 const match = url.match(regExp);
@@ -565,79 +745,87 @@
             return Math.random().toString(36).substring(2, 8).toUpperCase();
         }
 
-        // Room functionality
-        leaveRoomBtn.addEventListener('click', goToHome);
+        function generateUserId() {
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        }
 
-        copyRoomIdBtn.addEventListener('click', () => {
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function showRoomUI() {
+            homeContainer.classList.add('hidden');
+            createRoomContainer.classList.add('hidden');
+            joinRoomContainer.classList.add('hidden');
+            roomContainer.classList.remove('hidden');
+            
+            document.getElementById('room-id-display').textContent = currentRoomId;
+        }
+
+        function goToHome() {
+            removeUserFromRoom();
+            
+            createRoomContainer.classList.add('hidden');
+            joinRoomContainer.classList.add('hidden');
+            roomContainer.classList.add('hidden');
+            homeContainer.classList.remove('hidden');
+            
+            if (player) {
+                player.destroy();
+                player = null;
+            }
+            
+            currentRoomId = '';
+            isCreator = false;
+            currentUser = '';
+        }
+
+        // Event listeners
+        document.getElementById('create-room-btn').addEventListener('click', () => {
+            homeContainer.classList.add('hidden');
+            createRoomContainer.classList.remove('hidden');
+        });
+
+        document.getElementById('join-room-btn').addEventListener('click', () => {
+            homeContainer.classList.add('hidden');
+            joinRoomContainer.classList.remove('hidden');
+        });
+
+        document.getElementById('back-home-btn').addEventListener('click', goToHome);
+        document.getElementById('back-home-btn-2').addEventListener('click', goToHome);
+        document.getElementById('leave-room').addEventListener('click', goToHome);
+
+        document.getElementById('start-room-btn').addEventListener('click', createRoom);
+        document.getElementById('join-room-submit-btn').addEventListener('click', joinRoom);
+
+        document.getElementById('copy-room-id').addEventListener('click', () => {
             navigator.clipboard.writeText(currentRoomId);
-            alert('Room ID copied to clipboard!');
+            showToast('Room ID copied to clipboard!');
         });
 
-        // Chat functionality
-        sendMessageBtn.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', (e) => {
+        document.getElementById('send-message').addEventListener('click', () => {
+            const message = document.getElementById('chat-input').value.trim();
+            if (message) {
+                sendChatMessage(message);
+                document.getElementById('chat-input').value = '';
+            }
+        });
+
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                sendMessage();
+                const message = document.getElementById('chat-input').value.trim();
+                if (message) {
+                    sendChatMessage(message);
+                    document.getElementById('chat-input').value = '';
+                }
             }
         });
 
-        function sendMessage() {
-            const message = chatInput.value.trim();
-            if (message && currentUser) {
-                addChatMessage(currentUser, message);
-                chatInput.value = '';
-                
-                // In a real app, you would send this to the server
-                // simulateReceiveMessage(currentUser, message);
-            }
-        }
-
-        function addChatMessage(sender, message) {
-            const chatMessagesDiv = document.getElementById('chat-messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message');
-            
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            messageDiv.innerHTML = `
-                <span class="sender">${sender}:</span>
-                <span class="text">${message}</span>
-                <span class="time">${time}</span>
-            `;
-            
-            chatMessagesDiv.appendChild(messageDiv);
-            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
-            
-            // Store message
-            chatMessages.push({ sender, message, time });
-        }
-
-        // User management
-        function addUserToRoom(username, isCreator) {
-            users.push({ username, isCreator });
-            updateUserList();
-        }
-
-        function updateUserList() {
-            const userList = document.getElementById('user-list');
-            userList.innerHTML = '';
-            
-            users.forEach(user => {
-                const li = document.createElement('li');
-                li.textContent = user.username;
-                if (user.isCreator) {
-                    li.classList.add('creator');
-                }
-                userList.appendChild(li);
-            });
-        }
-
-        // Video controls
-        playPauseBtn.addEventListener('click', togglePlayPause);
-        volumeControl.addEventListener('input', setVolume);
-        changeVideoBtn.addEventListener('click', changeVideo);
-
-        function togglePlayPause() {
+        document.getElementById('play-pause').addEventListener('click', () => {
             if (!player) return;
             
             if (player.getPlayerState() === YT.PlayerState.PLAYING) {
@@ -645,46 +833,15 @@
             } else {
                 player.playVideo();
             }
-        }
+        });
 
-        function setVolume() {
-            if (!player) return;
-            player.setVolume(volumeControl.value * 100);
-        }
-
-        function changeVideo() {
-            if (!isCreator) {
-                alert('Only the room creator can change the video');
-                return;
+        document.getElementById('volume-control').addEventListener('input', (e) => {
+            if (player) {
+                player.setVolume(e.target.value * 100);
             }
-            
-            const newUrl = changeVideoUrl.value.trim();
-            if (!newUrl) return;
-            
-            const videoId = extractVideoId(newUrl);
-            if (!videoId) {
-                alert('Please enter a valid YouTube or Vimeo URL');
-                return;
-            }
-            
-            player.loadVideoById(videoId);
-            changeVideoUrl.value = '';
-            
-            // In a real app, you would notify all users about the video change
-            addChatMessage('System', `Video changed to: ${newUrl}`);
-        }
+        });
 
-        // Sync functionality (for creator)
-        function syncPlayback() {
-            if (!isCreator || !player) return;
-            
-            const currentTime = player.getCurrentTime();
-            const playerState = player.getPlayerState();
-            
-            // In a real app, you would send this to the server to sync with other users
-            // For now, we'll just log it
-            console.log(`Syncing playback: time=${currentTime}, state=${playerState}`);
-        }
+        document.getElementById('change-video-btn').addEventListener('click', changeVideo);
     </script>
 </body>
 </html>

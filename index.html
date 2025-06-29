@@ -1,517 +1,690 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Secret Watch Together 💖</title>
-<style>
-  body,html {
-    margin:0; padding:0; height:100%; background:#fef6f9;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    display: flex; justify-content: center; align-items: center;
-    overflow: hidden;
-  }
-  #passwordScreen, #mainApp {
-    width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  }
-  #passwordScreen {
-    background: #ffcee1;
-    color: #fff;
-    font-size: 1.4rem;
-  }
-  #passwordInput {
-    font-size: 1.2rem;
-    padding: 0.6rem 1rem;
-    border-radius: 12px;
-    border: none;
-    outline:none;
-    margin-top: 1rem;
-    width: 200px;
-  }
-  #passwordSubmit {
-    margin-top: 1rem;
-    padding: 0.6rem 1.2rem;
-    font-size: 1.2rem;
-    border-radius: 12px;
-    border: none;
-    background: #ff4081;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  #passwordSubmit:hover {
-    background: #e91e63;
-  }
-  #errorMsg {
-    margin-top: 0.5rem;
-    color: #fff7f7;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch2Gether</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #f1f3f4;
+            --dark-color: #202124;
+            --light-color: #ffffff;
+            --success-color: #34a853;
+            --error-color: #ea4335;
+        }
 
-  /* Main app styling */
-  #mainApp {
-    display: none;
-    width: 95vw; max-width: 1400px;
-    height: 95vh;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    overflow: hidden;
-    flex-direction: column;
-  }
-  header {
-    padding: 1rem;
-    font-size: 1.6rem;
-    font-weight: bold;
-    color: #ff4081;
-    text-align: center;
-  }
-  #urlInputSection {
-    display: flex;
-    padding: 0 1rem 1rem 1rem;
-    gap: 0.5rem;
-    align-items: center;
-  }
-  #videoUrlInput {
-    flex: 1;
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    outline: none;
-  }
-  #setUrlBtn {
-    background: #ff4081;
-    border: none;
-    color: white;
-    padding: 0.5rem 1.2rem;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  #setUrlBtn:hover {
-    background: #e91e63;
-  }
-  .container {
-    flex: 1;
-    display: flex;
-    gap: 1rem;
-    overflow: hidden;
-    position: relative;
-  }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
 
-  #videoSection {
-    flex: 3;
-    background: #000;
-    border-radius: 20px;
-    overflow: hidden;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-  }
-  #videoSection iframe {
-    flex: 1;
-    width: 100%;
-    border: none;
-  }
-  #fullscreenBtn {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    z-index: 10;
-    background: rgba(255,64,129,0.85);
-    border: none;
-    padding: 0.5rem 0.9rem;
-    border-radius: 15px;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.3s;
-  }
-  #fullscreenBtn:hover {
-    background: #e91e63;
-  }
+        body {
+            background-color: #f8f9fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
 
-  #chatSection {
-    flex: 1;
-    background: #fff0f7;
-    border-radius: 20px;
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    box-sizing: border-box;
-    transition: transform 0.3s ease;
-  }
-  #chatSection.hidden {
-    transform: translateX(100%);
-  }
-  #messages {
-    flex: 1;
-    overflow-y: auto;
-    padding-right: 0.5rem;
-  }
-  #messages p {
-    background: #ffb6c1;
-    padding: 0.5rem 1rem;
-    border-radius: 15px;
-    margin: 0.3rem 0;
-    max-width: 80%;
-    word-wrap: break-word;
-  }
-  #inputSection {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.8rem;
-  }
-  #chatInput {
-    flex: 1;
-    padding: 0.5rem 1rem;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    outline: none;
-  }
-  #sendBtn {
-    background: #ff4081;
-    border: none;
-    color: white;
-    padding: 0.5rem 1.2rem;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  #sendBtn:hover {
-    background: #e91e63;
-  }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--light-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
 
-  #status {
-    margin-top: 0.5rem;
-    font-size: 0.9rem;
-    color: #ff4081;
-    text-align: center;
-  }
+        .hidden {
+            display: none;
+        }
 
-  /* Chat toggle button */
-  #chatToggleBtn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #ff4081;
-    border: none;
-    color: white;
-    padding: 0.4rem 0.7rem;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: bold;
-    z-index: 20;
-    transition: background-color 0.3s;
-  }
-  #chatToggleBtn:hover {
-    background: #e91e63;
-  }
+        h1, h2, h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
 
-  /* Toast popup for fullscreen chat message */
-  #toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255,64,129,0.95);
-    color: white;
-    padding: 1rem 2rem;
-    border-radius: 30px;
-    font-weight: 600;
-    font-size: 1rem;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.4s ease;
-    z-index: 50;
-  }
-  #toast.show {
-    opacity: 1;
-    pointer-events: auto;
-  }
+        p {
+            margin-bottom: 2rem;
+            color: #5f6368;
+        }
 
-  /* Responsive */
-  @media (max-width: 768px) {
-    #mainApp {
-      height: 100vh;
-      width: 100vw;
-      border-radius: 0;
-    }
-    .container {
-      flex-direction: column;
-    }
-    #videoSection {
-      flex: unset;
-      height: 60vh;
-      border-radius: 0;
-    }
-    #chatSection {
-      flex: unset;
-      height: 35vh;
-      border-radius: 0;
-      position: relative;
-      transform: translateX(0) !important;
-    }
-    #chatToggleBtn {
-      top: auto;
-      bottom: 80px;
-      right: 20px;
-    }
-  }
-</style>
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        .btn.primary {
+            background-color: var(--primary-color);
+            color: var(--light-color);
+        }
+
+        .btn.primary:hover {
+            background-color: #3367d6;
+        }
+
+        .btn.secondary {
+            background-color: var(--secondary-color);
+            color: var(--dark-color);
+        }
+
+        .btn.secondary:hover {
+            background-color: #e0e0e0;
+        }
+
+        .btn.small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            margin: 2rem 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .room-content {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .video-container {
+            flex: 2;
+        }
+
+        #video-player {
+            width: 100%;
+            height: 400px;
+            background-color: #000;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .video-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .control-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .video-url-control {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .video-url-control input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            height: 300px;
+            background-color: #f9f9f9;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 0.5rem;
+            background-color: white;
+            border-top: 1px solid #dadce0;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+        }
+
+        .message {
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message .sender {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        .message .time {
+            font-size: 0.8rem;
+            color: #5f6368;
+        }
+
+        .room-users {
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+
+        .room-users h3 {
+            text-align: left;
+        }
+
+        #user-list {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        #user-list li {
+            background: var(--secondary-color);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        #user-list li.creator {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .room-content {
+                flex-direction: column;
+            }
+            
+            #video-player {
+                height: 250px;
+            }
+        
+            .chat-messages {
+                height: 200px;
+            }
+        }
+    </style>
 </head>
 <body>
-
-<!-- Password screen -->
-<div id="passwordScreen">
-  <div>Enter the secret password to watch together:</div>
-  <input id="passwordInput" type="password" placeholder="Password" autofocus />
-  <button id="passwordSubmit">Join</button>
-  <div id="errorMsg"></div>
-</div>
-
-<!-- Main app -->
-<div id="mainApp">
-  <header>🎬 Secret Watch Together 💖</header>
-  <div id="urlInputSection">
-    <input id="videoUrlInput" type="text" placeholder="Paste YouTube URL here" />
-    <button id="setUrlBtn">Set Video</button>
-  </div>
-  <div class="container">
-    <div id="videoSection">
-      <iframe id="videoFrame" src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen allow="autoplay"></iframe>
-      <button id="fullscreenBtn" title="Toggle Fullscreen">Fullscreen ⛶</button>
-      <button id="chatToggleBtn" title="Toggle Chat">Chat 💬</button>
+    <div class="container" id="home-container">
+        <h1>Watch2Gether</h1>
+        <p>Watch videos in sync with friends</p>
+        
+        <div class="action-buttons">
+            <button id="create-room-btn" class="btn primary">Create Room</button>
+            <button id="join-room-btn" class="btn secondary">Join Room</button>
+        </div>
     </div>
-    <div id="chatSection">
-      <div id="messages"></div>
-      <div id="inputSection">
-        <input id="chatInput" type="text" placeholder="Type your message..." />
-        <button id="sendBtn">Send</button>
-      </div>
-      <div id="status"></div>
+
+    <div class="container hidden" id="create-room-container">
+        <h2>Create a Room</h2>
+        <div class="form-group">
+            <label for="video-url">Video URL (YouTube, Vimeo, etc.)</label>
+            <input type="text" id="video-url" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+        </div>
+        <div class="form-group">
+            <label for="room-password">Room Password (optional)</label>
+            <input type="password" id="room-password" placeholder="Set a password for the room">
+        </div>
+        <div class="form-group">
+            <label for="your-name">Your Name</label>
+            <input type="text" id="creator-name" placeholder="Enter your name">
+        </div>
+        <button id="start-room-btn" class="btn primary">Start Room</button>
+        <button id="back-home-btn" class="btn secondary">Back</button>
     </div>
-  </div>
-</div>
 
-<div id="toast"></div>
+    <div class="container hidden" id="join-room-container">
+        <h2>Join a Room</h2>
+        <div class="form-group">
+            <label for="room-id">Room ID</label>
+            <input type="text" id="room-id" placeholder="Enter room ID">
+        </div>
+        <div class="form-group">
+            <label for="room-password-join">Room Password (if required)</label>
+            <input type="password" id="room-password-join" placeholder="Enter room password">
+        </div>
+        <div class="form-group">
+            <label for="joiner-name">Your Name</label>
+            <input type="text" id="joiner-name" placeholder="Enter your name">
+        </div>
+        <button id="join-room-submit-btn" class="btn primary">Join Room</button>
+        <button id="back-home-btn-2" class="btn secondary">Back</button>
+    </div>
 
-<script>
-// Password check
-const PASSWORD = '2005';
-const passwordScreen = document.getElementById('passwordScreen');
-const mainApp = document.getElementById('mainApp');
-const passwordInput = document.getElementById('passwordInput');
-const passwordSubmit = document.getElementById('passwordSubmit');
-const errorMsg = document.getElementById('errorMsg');
+    <div class="container hidden" id="room-container">
+        <div class="room-header">
+            <h2 id="room-title">Room: <span id="room-id-display"></span></h2>
+            <div class="room-controls">
+                <button id="copy-room-id" class="btn small">Copy Room ID</button>
+                <button id="leave-room" class="btn small secondary">Leave Room</button>
+            </div>
+        </div>
+        
+        <div class="room-content">
+            <div class="video-container">
+                <div id="video-player"></div>
+                <div class="video-controls">
+                    <button id="play-pause" class="control-btn">⏸</button>
+                    <input type="range" id="volume-control" min="0" max="1" step="0.1" value="1">
+                    <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+                </div>
+                <div class="video-url-control">
+                    <input type="text" id="change-video-url" placeholder="Enter new video URL">
+                    <button id="change-video-btn" class="btn small">Change Video</button>
+                </div>
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input">
+                    <input type="text" id="chat-input" placeholder="Type your message...">
+                    <button id="send-message" class="btn small">Send</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="room-users">
+            <h3>Users in Room</h3>
+            <ul id="user-list"></ul>
+        </div>
+    </div>
 
-passwordSubmit.onclick = checkPassword;
-passwordInput.onkeydown = e => { if(e.key==='Enter') checkPassword(); };
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        // DOM Elements
+        const homeContainer = document.getElementById('home-container');
+        const createRoomContainer = document.getElementById('create-room-container');
+        const joinRoomContainer = document.getElementById('join-room-container');
+        const roomContainer = document.getElementById('room-container');
 
-function checkPassword() {
-  if(passwordInput.value === PASSWORD) {
-    passwordScreen.style.display = 'none';
-    mainApp.style.display = 'flex';
-    initializeApp();
-  } else {
-    errorMsg.textContent = 'Wrong password! Try again.';
-    passwordInput.value = '';
-  }
-}
+        const createRoomBtn = document.getElementById('create-room-btn');
+        const joinRoomBtn = document.getElementById('join-room-btn');
+        const startRoomBtn = document.getElementById('start-room-btn');
+        const joinRoomSubmitBtn = document.getElementById('join-room-submit-btn');
+        const backHomeBtn = document.getElementById('back-home-btn');
+        const backHomeBtn2 = document.getElementById('back-home-btn-2');
+        const leaveRoomBtn = document.getElementById('leave-room');
+        const copyRoomIdBtn = document.getElementById('copy-room-id');
+        const sendMessageBtn = document.getElementById('send-message');
+        const chatInput = document.getElementById('chat-input');
+        const playPauseBtn = document.getElementById('play-pause');
+        const volumeControl = document.getElementById('volume-control');
+        const changeVideoBtn = document.getElementById('change-video-btn');
+        const changeVideoUrl = document.getElementById('change-video-url');
 
-// WebRTC peer connection variables
-let localConnection;
-let dataChannel;
-let connected = false;
+        // Room state
+        let currentRoomId = '';
+        let isCreator = false;
+        let currentUser = '';
+        let player;
+        let users = [];
+        let chatMessages = [];
 
-const messagesDiv = document.getElementById('messages');
-const chatInput = document.getElementById('chatInput');
-const sendBtn = document.getElementById('sendBtn');
-const statusDiv = document.getElementById('status');
-
-const videoFrame = document.getElementById('videoFrame');
-const videoUrlInput = document.getElementById('videoUrlInput');
-const setUrlBtn = document.getElementById('setUrlBtn');
-
-const fullscreenBtn = document.getElementById('fullscreenBtn');
-const chatSection = document.getElementById('chatSection');
-const chatToggleBtn = document.getElementById('chatToggleBtn');
-const toast = document.getElementById('toast');
-
-let isChatVisible = true;
-let isFullscreen = false;
-
-// Setup fullscreen toggle
-fullscreenBtn.onclick = () => {
-  if (!document.fullscreenElement) {
-    videoSection.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
-};
-const videoSection = document.getElementById('videoSection');
-document.addEventListener('fullscreenchange', () => {
-  isFullscreen = !!document.fullscreenElement;
-});
-
-// Toggle chat visibility
-chatToggleBtn.onclick = () => {
-  isChatVisible = !isChatVisible;
-  if (isChatVisible) {
-    chatSection.classList.remove('hidden');
-    chatToggleBtn.textContent = 'Chat 💬';
-  } else {
-    chatSection.classList.add('hidden');
-    chatToggleBtn.textContent = 'Chat ❌';
-  }
-};
-
-// Show toast message on fullscreen
-function showToast(message) {
-  toast.textContent = message;
-  toast.classList.add('show');
-  setTimeout(() => {
-    toast.classList.remove('show');
-  }, 3500);
-}
-
-// Add chat message to UI
-function addMessage(text, isLocal) {
-  const p = document.createElement('p');
-  p.textContent = text;
-  p.style.backgroundColor = isLocal ? '#ff6f91' : '#ffb6c1';
-  messagesDiv.appendChild(p);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-  if (!isLocal && isFullscreen) {
-    showToast(text);
-  }
-}
-
-// Send chat message
-function sendMessage() {
-  const text = chatInput.value.trim();
-  if(!text || !connected || dataChannel.readyState !== 'open') return;
-  dataChannel.send(JSON.stringify({type:'chat', text}));
-  addMessage(text, true);
-  chatInput.value = '';
-}
-
-// Set video URL
-setUrlBtn.onclick = () => {
-  let url = videoUrlInput.value.trim();
-  if(!url) return alert('Please paste a valid YouTube URL');
-
-  const videoId = extractYouTubeId(url);
-  if(!videoId) return alert('Invalid YouTube URL');
-
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
-
-  setVideoSrc(embedUrl, true);
-};
-
-// Set iframe src and notify peer
-function setVideoSrc(url, notifyPeer) {
-  videoFrame.src = url;
-  videoUrlInput.value = url;
-
-  if(notifyPeer && connected && dataChannel.readyState === 'open') {
-    dataChannel.send(JSON.stringify({type:'video-url', url}));
-  }
-}
-
-// Extract YouTube video ID from URL
-function extractYouTubeId(url) {
-  const regExp = /^.*((youtu.be\/)|(v\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[6].length === 11) ? match[6] : null;
-}
-
-// Initialize WebRTC and chat
-function initializeApp() {
-  statusDiv.textContent = 'Connecting...';
-
-  const initiator = confirm('Are you the initiator of this watch session? Press OK for yes.');
-
-  // Setup WebRTC PeerConnection
-  localConnection = new RTCPeerConnection();
-
-  if(initiator) {
-    dataChannel = localConnection.createDataChannel('chat');
-    setupDataChannel();
-    localConnection.createOffer()
-      .then(offer => localConnection.setLocalDescription(offer))
-      .then(() => {
-        // This demo does not include signaling server — for real app, share localConnection.localDescription with peer manually
-        alert('Send this offer to your friend:\n\n' + JSON.stringify(localConnection.localDescription));
-        const answerStr = prompt('Paste your friend\'s answer here:');
-        if(answerStr) {
-          const answer = JSON.parse(answerStr);
-          localConnection.setRemoteDescription(answer);
+        // YouTube API
+        function onYouTubeIframeAPIReady() {
+            // Player will be initialized when room is created/joined
         }
-      });
-  } else {
-    localConnection.ondatachannel = event => {
-      dataChannel = event.channel;
-      setupDataChannel();
-    };
-    const offerStr = prompt('Paste initiator\'s offer here:');
-    if(offerStr) {
-      const offer = JSON.parse(offerStr);
-      localConnection.setRemoteDescription(offer)
-        .then(() => localConnection.createAnswer())
-        .then(answer => localConnection.setLocalDescription(answer))
-        .then(() => {
-          alert('Send this answer back to the initiator:\n\n' + JSON.stringify(localConnection.localDescription));
+
+        // Initialize YouTube player
+        function initYouTubePlayer(videoId) {
+            player = new YT.Player('video-player', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0,
+                    'disablekb': 1,
+                    'modestbranding': 1,
+                    'rel': 0
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            updatePlayerControls();
+            event.target.setVolume(100);
+            
+            // Sync playback every 5 seconds if creator
+            if (isCreator) {
+                setInterval(syncPlayback, 5000);
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            updatePlayerControls();
+        }
+
+        function updatePlayerControls() {
+            if (!player) return;
+            
+            const playerState = player.getPlayerState();
+            if (playerState === YT.PlayerState.PLAYING) {
+                playPauseBtn.textContent = '⏸';
+            } else {
+                playPauseBtn.textContent = '▶';
+            }
+            
+            // Update time display
+            updateTimeDisplay();
+        }
+
+        function updateTimeDisplay() {
+            if (!player) return;
+            
+            const currentTime = player.getCurrentTime();
+            const duration = player.getDuration();
+            
+            document.getElementById('current-time').textContent = formatTime(currentTime);
+            document.getElementById('duration').textContent = formatTime(duration);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // Event Listeners
+        createRoomBtn.addEventListener('click', () => {
+            homeContainer.classList.add('hidden');
+            createRoomContainer.classList.remove('hidden');
         });
-    }
-  }
 
-  localConnection.onicecandidate = event => {
-    if(event.candidate) {
-      console.log('ICE candidate:', event.candidate);
-      // ICE candidates should be exchanged via signaling in real apps
-    }
-  };
+        joinRoomBtn.addEventListener('click', () => {
+            homeContainer.classList.add('hidden');
+            joinRoomContainer.classList.remove('hidden');
+        });
 
-  localConnection.onconnectionstatechange = () => {
-    if(localConnection.connectionState === 'connected') {
-      connected = true;
-      statusDiv.textContent = 'Connected!';
-    }
-  };
+        backHomeBtn.addEventListener('click', goToHome);
+        backHomeBtn2.addEventListener('click', goToHome);
 
-  sendBtn.onclick = sendMessage;
-  chatInput.onkeydown = e => { if(e.key === 'Enter') sendMessage(); };
-
-  // Add received messages
-  function setupDataChannel() {
-    dataChannel.onopen = () => {
-      connected = true;
-      statusDiv.textContent = 'Connected!';
-    };
-    dataChannel.onclose = () => {
-      connected = false;
-      statusDiv.textContent = 'Disconnected.';
-    };
-    dataChannel.onerror = err => {
-      statusDiv.textContent = 'Error: ' + err;
-    };
-    dataChannel.onmessage = e => {
-      try {
-        const data = JSON.parse(e.data);
-        if(data.type === 'chat') {
-          addMessage(data.text, false);
-        } else if(data.type === 'video-url') {
-          setVideoSrc(data.url, false);
+        function goToHome() {
+            createRoomContainer.classList.add('hidden');
+            joinRoomContainer.classList.add('hidden');
+            roomContainer.classList.add('hidden');
+            homeContainer.classList.remove('hidden');
+            
+            // Reset any room state
+            if (player) {
+                player.destroy();
+                player = null;
+            }
         }
-      } catch(err) {
-        console.error('Invalid data:', e.data);
-      }
-    };
-  }
-}
-</script>
 
+        startRoomBtn.addEventListener('click', createRoom);
+        joinRoomSubmitBtn.addEventListener('click', joinRoom);
+
+        function createRoom() {
+            const videoUrl = document.getElementById('video-url').value.trim();
+            const password = document.getElementById('room-password').value.trim();
+            currentUser = document.getElementById('creator-name').value.trim() || 'Host';
+            
+            if (!videoUrl) {
+                alert('Please enter a video URL');
+                return;
+            }
+            
+            // Extract video ID (simplified for demo)
+            let videoId = extractVideoId(videoUrl);
+            if (!videoId) {
+                alert('Please enter a valid YouTube or Vimeo URL');
+                return;
+            }
+            
+            // In a real app, this would be generated by the server
+            currentRoomId = generateRoomId();
+            isCreator = true;
+            
+            // Show room UI
+            showRoomUI();
+            
+            // Initialize player with the video
+            initYouTubePlayer(videoId);
+            
+            // Simulate adding host to user list
+            addUserToRoom(currentUser, true);
+            
+            // Simulate receiving a welcome message
+            addChatMessage('System', `Welcome to your room! Share the Room ID: ${currentRoomId} with others to join.`);
+        }
+
+        function joinRoom() {
+            const roomId = document.getElementById('room-id').value.trim();
+            const password = document.getElementById('room-password-join').value.trim();
+            currentUser = document.getElementById('joiner-name').value.trim() || 'Guest';
+            
+            if (!roomId) {
+                alert('Please enter a room ID');
+                return;
+            }
+            
+            // In a real app, you would verify the room exists and password matches
+            currentRoomId = roomId;
+            isCreator = false;
+            
+            // Show room UI
+            showRoomUI();
+            
+            // Simulate joining an existing room
+            // In a real app, you would get the current video from the server
+            const dummyVideoId = 'dQw4w9WgXcQ'; // Default video if not creator
+            initYouTubePlayer(dummyVideoId);
+            
+            // Simulate adding user to room
+            addUserToRoom(currentUser, false);
+            
+            // Simulate receiving a welcome message
+            addChatMessage('System', `You've joined the room!`);
+            addChatMessage('Host', `Welcome to the room, ${currentUser}!`);
+        }
+
+        function showRoomUI() {
+            homeContainer.classList.add('hidden');
+            createRoomContainer.classList.add('hidden');
+            joinRoomContainer.classList.add('hidden');
+            roomContainer.classList.remove('hidden');
+            
+            document.getElementById('room-id-display').textContent = currentRoomId;
+        }
+
+        function extractVideoId(url) {
+            // Simplified for demo - in a real app you'd need more robust URL parsing
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                const match = url.match(regExp);
+                return (match && match[2].length === 11) ? match[2] : null;
+            } else if (url.includes('vimeo.com')) {
+                const regExp = /vimeo.com\/(\d+)/;
+                const match = url.match(regExp);
+                return match ? match[1] : null;
+            }
+            return null;
+        }
+
+        function generateRoomId() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        // Room functionality
+        leaveRoomBtn.addEventListener('click', goToHome);
+
+        copyRoomIdBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(currentRoomId);
+            alert('Room ID copied to clipboard!');
+        });
+
+        // Chat functionality
+        sendMessageBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message && currentUser) {
+                addChatMessage(currentUser, message);
+                chatInput.value = '';
+                
+                // In a real app, you would send this to the server
+                // simulateReceiveMessage(currentUser, message);
+            }
+        }
+
+        function addChatMessage(sender, message) {
+            const chatMessagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <span class="sender">${sender}:</span>
+                <span class="text">${message}</span>
+                <span class="time">${time}</span>
+            `;
+            
+            chatMessagesDiv.appendChild(messageDiv);
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+            
+            // Store message
+            chatMessages.push({ sender, message, time });
+        }
+
+        // User management
+        function addUserToRoom(username, isCreator) {
+            users.push({ username, isCreator });
+            updateUserList();
+        }
+
+        function updateUserList() {
+            const userList = document.getElementById('user-list');
+            userList.innerHTML = '';
+            
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = user.username;
+                if (user.isCreator) {
+                    li.classList.add('creator');
+                }
+                userList.appendChild(li);
+            });
+        }
+
+        // Video controls
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        volumeControl.addEventListener('input', setVolume);
+        changeVideoBtn.addEventListener('click', changeVideo);
+
+        function togglePlayPause() {
+            if (!player) return;
+            
+            if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+        }
+
+        function setVolume() {
+            if (!player) return;
+            player.setVolume(volumeControl.value * 100);
+        }
+
+        function changeVideo() {
+            if (!isCreator) {
+                alert('Only the room creator can change the video');
+                return;
+            }
+            
+            const newUrl = changeVideoUrl.value.trim();
+            if (!newUrl) return;
+            
+            const videoId = extractVideoId(newUrl);
+            if (!videoId) {
+                alert('Please enter a valid YouTube or Vimeo URL');
+                return;
+            }
+            
+            player.loadVideoById(videoId);
+            changeVideoUrl.value = '';
+            
+            // In a real app, you would notify all users about the video change
+            addChatMessage('System', `Video changed to: ${newUrl}`);
+        }
+
+        // Sync functionality (for creator)
+        function syncPlayback() {
+            if (!isCreator || !player) return;
+            
+            const currentTime = player.getCurrentTime();
+            const playerState = player.getPlayerState();
+            
+            // In a real app, you would send this to the server to sync with other users
+            // For now, we'll just log it
+            console.log(`Syncing playback: time=${currentTime}, state=${playerState}`);
+        }
+    </script>
 </body>
 </html>
